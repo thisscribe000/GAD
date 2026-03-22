@@ -34,7 +34,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (staffId != null) {
       final employee = _employeeService.getEmployeeById(staffId);
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _employee = employee;
@@ -42,7 +44,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _loading = false;
       });
     } else {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _averageWorkDuration = averageWorkDuration;
         _loading = false;

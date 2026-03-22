@@ -9,12 +9,12 @@ class AppChip extends StatelessWidget {
   final ChipType type;
 
   const AppChip({
-    Key? key,
+    super.key,
     required this.label,
     required this.selected,
     required this.onSelected,
     this.type = ChipType.filter,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

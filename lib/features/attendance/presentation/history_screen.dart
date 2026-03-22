@@ -28,7 +28,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final data = await _service.getHistory();
     final summary = await _service.getWeeklySummary();
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       _history = data.reversed.toList();

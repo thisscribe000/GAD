@@ -53,7 +53,9 @@ class _AuthGateState extends State<AuthGate> {
       final loggedIn = await _authService.isLoggedIn();
 
       if (!loggedIn) {
-        if (!mounted) return;
+        if (!mounted) {
+          return;
+        }
         setState(() {
           _screen = const LoginScreen();
         });
@@ -72,7 +74,9 @@ class _AuthGateState extends State<AuthGate> {
       final biometricEnabled = await _authService.isBiometricEnabled();
 
       if (!biometricEnabled) {
-        if (!mounted) return;
+        if (!mounted) {
+          return;
+        }
         setState(() {
           _screen = targetScreen;
         });
@@ -85,7 +89,9 @@ class _AuthGateState extends State<AuthGate> {
       if (pendingNextLaunch) {
         await _authService.clearBiometricPendingNextLaunch();
 
-        if (!mounted) return;
+        if (!mounted) {
+          return;
+        }
         setState(() {
           _screen = targetScreen;
         });
@@ -95,7 +101,9 @@ class _AuthGateState extends State<AuthGate> {
       final canCheck = await _biometricService.canCheck();
 
       if (!canCheck) {
-        if (!mounted) return;
+        if (!mounted) {
+          return;
+        }
         setState(() {
           _screen = targetScreen;
         });
@@ -106,13 +114,17 @@ class _AuthGateState extends State<AuthGate> {
         reason: 'Authenticate to continue to your dashboard',
       );
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _screen = ok ? targetScreen : const LoginScreen();
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _screen = const LoginScreen();
       });

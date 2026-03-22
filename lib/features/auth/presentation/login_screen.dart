@@ -25,7 +25,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    if (_isSubmitting) return;
+    if (_isSubmitting) {
+      return;
+    }
 
     final staffId = _staffIdController.text.trim();
 
@@ -44,7 +46,9 @@ class _LoginScreenState extends State<LoginScreen> {
       final employee = _employeeService.getEmployeeById(staffId);
 
       if (employee == null) {
-        if (!mounted) return;
+        if (!mounted) {
+          return;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Employee not found')),
         );
@@ -56,13 +60,18 @@ class _LoginScreenState extends State<LoginScreen> {
         role: employee.role,
       );
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       final alreadyEnabled = await _authService.isBiometricEnabled();
 
       bool enableBiometric = alreadyEnabled;
 
       if (!alreadyEnabled) {
+        if (!mounted) {
+          return;
+        }
         final choice = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
@@ -95,7 +104,9 @@ class _LoginScreenState extends State<LoginScreen> {
         await _authService.setBiometricPendingNextLaunch(true);
       }
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       if (employee.role == 'manager') {
         Navigator.pushReplacementNamed(context, AppRouter.managerDashboard);

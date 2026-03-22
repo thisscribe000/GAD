@@ -44,7 +44,9 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
       initialDate: _startDate ?? now,
     );
 
-    if (picked == null) return;
+    if (picked == null) {
+      return;
+    }
 
     setState(() {
       _startDate = picked;
@@ -63,7 +65,9 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
       initialDate: _endDate ?? base,
     );
 
-    if (picked == null) return;
+    if (picked == null) {
+      return;
+    }
 
     setState(() {
       _endDate = picked;
@@ -71,12 +75,16 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
   }
 
   Future<void> _submit() async {
-    if (_submitting) return;
+    if (_submitting) {
+      return;
+    }
 
     final staffId = await _authService.getCurrentUser();
 
     if (staffId == null || staffId.isEmpty) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Unable to identify current user')),
       );
@@ -84,6 +92,9 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
     }
 
     if (_startDate == null || _endDate == null) {
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select start and end dates')),
       );
@@ -91,6 +102,9 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
     }
 
     if (_reasonController.text.trim().isEmpty) {
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a reason')),
       );
@@ -109,7 +123,9 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
       reason: _reasonController.text.trim(),
     );
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       _submitting = false;
@@ -134,7 +150,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           DropdownButtonFormField<String>(
-            value: _leaveType,
+            initialValue: _leaveType,
             items: _leaveTypes
                 .map(
                   (type) => DropdownMenuItem(
@@ -144,7 +160,9 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
                 )
                 .toList(),
             onChanged: (value) {
-              if (value == null) return;
+              if (value == null) {
+                return;
+              }
               setState(() {
                 _leaveType = value;
               });

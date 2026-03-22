@@ -53,7 +53,9 @@ class LeaveService {
     final all = await getAllRequests();
     final index = all.indexWhere((e) => e.id == requestId);
 
-    if (index == -1) return;
+    if (index == -1) {
+      return;
+    }
 
     all[index] = all[index].copyWith(status: status);
     await _saveAllRequests(all);
@@ -66,12 +68,16 @@ class LeaveService {
     int count = 0;
 
     for (final request in all) {
-      if (request.status != 'Approved') continue;
+      if (request.status != 'Approved') {
+        continue;
+      }
 
       final start = DateTime.tryParse(request.startDate);
       final end = DateTime.tryParse(request.endDate);
 
-      if (start == null || end == null) continue;
+      if (start == null || end == null) {
+        continue;
+      }
 
       final startOnly = DateTime(start.year, start.month, start.day);
       final endOnly = DateTime(end.year, end.month, end.day);

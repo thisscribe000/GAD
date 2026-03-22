@@ -20,12 +20,16 @@ class AttendanceProvider extends ChangeNotifier {
   }
 
   DateTime? get clockInTime {
-    if (_todayState?.clockInIso == null) return null;
+    if (_todayState?.clockInIso == null) {
+      return null;
+    }
     return DateTime.tryParse(_todayState!.clockInIso!);
   }
 
   DateTime? get clockOutTime {
-    if (_todayState?.clockOutIso == null) return null;
+    if (_todayState?.clockOutIso == null) {
+      return null;
+    }
     return DateTime.tryParse(_todayState!.clockOutIso!);
   }
 
@@ -58,7 +62,9 @@ class AttendanceProvider extends ChangeNotifier {
       _todayState = TodayAttendanceState(dateKey: todayKey);
     }
 
-    if (_todayState!.clockInIso != null) return;
+    if (_todayState!.clockInIso != null) {
+      return;
+    }
 
     _todayState = _todayState!.copyWith(
       clockInIso: DateTime.now().toIso8601String(),
@@ -71,9 +77,15 @@ class AttendanceProvider extends ChangeNotifier {
   }
 
   Future<void> clockOut() async {
-    if (_todayState == null) return;
-    if (_todayState!.clockInIso == null) return;
-    if (_todayState!.clockOutIso != null) return;
+    if (_todayState == null) {
+      return;
+    }
+    if (_todayState!.clockInIso == null) {
+      return;
+    }
+    if (_todayState!.clockOutIso != null) {
+      return;
+    }
 
     _todayState = _todayState!.copyWith(
       clockOutIso: DateTime.now().toIso8601String(),

@@ -26,7 +26,9 @@ class _LeaveHistoryScreenState extends State<LeaveHistoryScreen> {
   Future<void> _load() async {
     final staffId = await _authService.getCurrentUser();
     if (staffId == null || staffId.isEmpty) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _requests = [];
         _loading = false;
@@ -36,7 +38,9 @@ class _LeaveHistoryScreenState extends State<LeaveHistoryScreen> {
 
     final requests = await _leaveService.getRequestsForStaff(staffId);
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       _requests = requests;

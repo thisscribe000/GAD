@@ -3,14 +3,26 @@ import 'package:gad/core/router/app_router.dart';
 import 'package:gad/shared/widgets/app_card.dart';
 
 class DirectoryListScreen extends StatelessWidget {
-  const DirectoryListScreen({Key? key}) : super(key: key);
+  const DirectoryListScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final employees = [
-      {'name': 'Devika Mehta', 'role': 'Sr. Customer Manager', 'dept': 'Customer Success'},
-      {'name': 'Lewis Clark', 'role': 'Software Engineer', 'dept': 'Engineering'},
-      {'name': 'Sara Bellum', 'role': 'HR Specialist', 'dept': 'Human Resources'},
+      {
+        'name': 'Devika Mehta',
+        'role': 'Sr. Customer Manager',
+        'dept': 'Customer Success'
+      },
+      {
+        'name': 'Lewis Clark',
+        'role': 'Software Engineer',
+        'dept': 'Engineering'
+      },
+      {
+        'name': 'Sara Bellum',
+        'role': 'HR Specialist',
+        'dept': 'Human Resources'
+      },
     ];
 
     return Scaffold(
@@ -27,7 +39,8 @@ class DirectoryListScreen extends StatelessWidget {
           final emp = employees[index];
           return AppCard(
             onTap: () {
-              Navigator.pushNamed(context, AppRouter.profile, arguments: {'employeeId': index});
+              Navigator.pushNamed(context, AppRouter.profile,
+                  arguments: {'employeeId': index});
             },
             child: Row(
               children: [
@@ -40,8 +53,10 @@ class DirectoryListScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(emp['name']!, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text(emp['role']!, style: const TextStyle(color: Colors.grey)),
+                      Text(emp['name']!,
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(emp['role']!,
+                          style: const TextStyle(color: Colors.grey)),
                       Text(emp['dept']!, style: const TextStyle(fontSize: 12)),
                     ],
                   ),

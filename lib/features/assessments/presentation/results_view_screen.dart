@@ -51,7 +51,9 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
 
     _questions = questions;
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     setState(() {
       _loading = false;
     });

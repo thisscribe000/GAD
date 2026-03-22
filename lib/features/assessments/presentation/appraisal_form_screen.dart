@@ -36,13 +36,17 @@ class _AppraisalFormScreenState extends State<AppraisalFormScreen> {
   }
 
   Future<void> _submit() async {
-    if (_submitting) return;
+    if (_submitting) {
+      return;
+    }
 
     final staffId = await _authService.getCurrentUser() ?? '';
     final cycleId = (widget.cycleId ?? 'q1_2026').toString();
 
     if (staffId.isEmpty) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No staff ID found. Please login again.')),
       );
@@ -50,7 +54,9 @@ class _AppraisalFormScreenState extends State<AppraisalFormScreen> {
     }
 
     if (_scores.length != _questions.length) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please rate all categories first.')),
       );
@@ -72,7 +78,9 @@ class _AppraisalFormScreenState extends State<AppraisalFormScreen> {
 
       await _service.submit(submission);
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Appraisal submitted successfully')),
@@ -80,7 +88,9 @@ class _AppraisalFormScreenState extends State<AppraisalFormScreen> {
 
       Navigator.pop(context);
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Submit failed: $e')),
       );

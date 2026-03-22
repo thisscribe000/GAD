@@ -3,6 +3,7 @@ import 'package:gad/core/router/app_router.dart';
 import 'package:gad/core/services/appraisal_service.dart';
 import 'package:gad/core/services/attendance_service.dart';
 import 'package:gad/core/services/auth_service.dart';
+import 'package:gad/core/services/employee_service.dart';
 import 'package:gad/core/services/leave_service.dart';
 import 'package:gad/features/assessments/domain/appraisal_submission.dart';
 import 'package:gad/shared/widgets/app_card.dart';
@@ -20,6 +21,7 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
   final AppraisalService _service = AppraisalService();
   final AttendanceService _attendanceService = AttendanceService();
   final LeaveService _leaveService = LeaveService();
+  final EmployeeService _employeeService = EmployeeService();
 
   List<AppraisalSubmission> _submissions = [];
   String _averageWorkDuration = '--';
@@ -43,7 +45,9 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
     final attendance = await _attendanceService.getAttendanceAnalytics();
     final onLeaveToday = await _leaveService.getApprovedLeaveCountToday();
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       _submissions = subs;
@@ -168,22 +172,30 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
             const Text('Staff Overview',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  children: [
-                    _buildTableHeader(),
-                    const Divider(),
-                    if (_submissions.isEmpty)
-                      const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 24),
-                          child: Text('No submissions yet'))
-                    else
-                      ..._submissions.map((s) => _buildTableRow(context,
-                          s.staffId, s.submitted ? 'Submitted' : 'Draft', s)),
-                  ],
-                ),
+            AppCard(
+              child: Column(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildTableHeader(),
+                  ),
+                  const Divider(),
+                  if (_submissions.isEmpty)
+                    const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Text('No submissions yet',
+                            style: TextStyle(
+                                color: Colors.grey,
+                                fontStyle: FontStyle.italic)))
+                  else
+                    ..._submissions.map((s) {
+                      final emp = _employeeService.getEmployeeById(s.staffId);
+                      final displayName = emp?.name ?? s.staffId;
+                      return _buildTableRow(context, displayName,
+                          s.submitted ? 'Submitted' : 'Draft', s);
+                    }),
+                ],
               ),
             ),
           ],
@@ -195,7 +207,9 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
   Future<void> _handleLogout() async {
     final auth = AuthService();
     await auth.logout();
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     Navigator.pushNamedAndRemoveUntil(
         context, AppRouter.login, (route) => false);
   }

@@ -1,0 +1,18 @@
+Analyzing GAD...                                                
+
+   info • Parameter 'key' could be a super parameter • lib/features/auth/presentation/forgot_password_screen.dart:6:9 • use_super_parameters
+   info • Use 'const' with the constructor to improve performance • lib/features/auth/presentation/forgot_password_screen.dart:22:13 • prefer_const_constructors
+   info • Don't use 'BuildContext's across async gaps • lib/features/auth/presentation/login_screen.dart:67:11 • use_build_context_synchronously
+warning • The value of the field '_averageWorkDuration' isn't used • lib/features/dashboard/presentation/manager_dashboard.dart:25:10 • unused_field
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/dashboard/presentation/manager_weekend_approval_screen.dart:46:32 • deprecated_member_use
+   info • 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor or activeTrackColor instead. This feature was deprecated after v3.31.0-2.0.pre • lib/features/dashboard/presentation/manager_weekend_approval_screen.dart:75:21 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/features/directory/presentation/directory_list_screen.dart:6:9 • use_super_parameters
+   info • Don't use 'BuildContext's across async gaps • lib/features/leave/presentation/leave_request_screen.dart:87:28 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps • lib/features/leave/presentation/leave_request_screen.dart:94:28 • use_build_context_synchronously
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/leave/presentation/leave_request_screen.dart:137:13 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/shared/widgets/app_card.dart:8:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/shared/widgets/app_chip.dart:11:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/shared/widgets/app_list_tile.dart:10:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/shared/widgets/app_text_field.dart:11:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/shared/widgets/custom_button.dart:10:9 • use_super_parameters
+

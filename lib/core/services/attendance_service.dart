@@ -4,6 +4,7 @@ import '../../features/attendance/domain/attendance_record.dart';
 import 'auth_service.dart';
 import 'weekend_work_service.dart';
 import 'time_service.dart';
+import 'location_service.dart';
 
 class AttendanceService {
   static const _historyKey = 'attendance_history';
@@ -17,6 +18,7 @@ class AttendanceService {
   final AuthService _authService = AuthService();
   final WeekendWorkService _weekendWorkService = WeekendWorkService();
   final TimeService _timeService = TimeService();
+  final LocationService _locationService = LocationService();
 
   Future<List<AttendanceRecord>> getHistory() async {
     final prefs = await SharedPreferences.getInstance();
@@ -30,16 +32,32 @@ class AttendanceService {
     await prefs.setStringList(_historyKey, raw);
   }
 
-  Future<bool> canCurrentUserWorkToday() async {
+  Future<String?> canCurrentUserWorkToday() async {
     final now = await _timeService.getNetworkTime();
-    if (!_weekendWorkService.isWeekend(now)) {
-      return true;
+
+    // 1. Time & Weekend Permission
+    bool isAllowedByTime = true;
+    if (_weekendWorkService.isWeekend(now)) {
+      final staffId = await _authService.getCurrentUser();
+      if (staffId == null || staffId.isEmpty) {
+        isAllowedByTime = false;
+      } else {
+        isAllowedByTime = await _weekendWorkService.isStaffApproved(staffId);
+      }
     }
-    final staffId = await _authService.getCurrentUser();
-    if (staffId == null || staffId.isEmpty) {
-      return false;
+
+    if (!isAllowedByTime) {
+      return 'Weekend work is restricted. Admin approval is required.';
     }
-    return await _weekendWorkService.isStaffApproved(staffId);
+
+    // 2. Location
+    final locationError = await _locationService.verifyLocation();
+    if (locationError != null) {
+      return locationError;
+    }
+
+    // Allowed
+    return null;
   }
 
   Future<Map<String, dynamic>> getClockState() async {
@@ -84,9 +102,9 @@ class AttendanceService {
   }
 
   Future<String> clockIn(String time) async {
-    final allowed = await canCurrentUserWorkToday();
-    if (!allowed) {
-      return 'Weekend work is restricted. Admin approval is required.';
+    final errorMsg = await canCurrentUserWorkToday();
+    if (errorMsg != null) {
+      return errorMsg;
     }
 
     final state = await getClockState();

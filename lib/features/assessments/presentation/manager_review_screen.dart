@@ -34,7 +34,9 @@ class _ManagerReviewScreenState extends State<ManagerReviewScreen> {
 
   Future<void> _submitReview() async {
     final submission = widget.submission;
-    if (submission == null) return;
+    if (submission == null) {
+      return;
+    }
 
     final unanswered = submission.selfScores.keys
         .where((question) => !_managerScores.containsKey(question))
@@ -54,7 +56,9 @@ class _ManagerReviewScreenState extends State<ManagerReviewScreen> {
       managerComment: _commentController.text.trim(),
     );
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Review saved')),

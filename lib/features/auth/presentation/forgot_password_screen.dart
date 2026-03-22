@@ -3,7 +3,7 @@ import 'package:gad/shared/widgets/custom_button.dart';
 import 'package:gad/shared/widgets/app_text_field.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
-  const ForgotPasswordScreen({Key? key}) : super(key: key);
+  const ForgotPasswordScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +19,7 @@ class ForgotPasswordScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 24),
-            AppTextField(
+            const AppTextField(
               label: 'Email',
               hint: 'you@example.com',
               keyboardType: TextInputType.emailAddress,

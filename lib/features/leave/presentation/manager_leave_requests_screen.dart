@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gad/core/services/leave_service.dart';
+import 'package:gad/core/services/employee_service.dart';
 import 'package:gad/features/leave/domain/leave_request.dart';
 
 class ManagerLeaveRequestsScreen extends StatefulWidget {
@@ -13,6 +14,7 @@ class ManagerLeaveRequestsScreen extends StatefulWidget {
 class _ManagerLeaveRequestsScreenState
     extends State<ManagerLeaveRequestsScreen> {
   final LeaveService _leaveService = LeaveService();
+  final EmployeeService _employeeService = EmployeeService();
 
   List<LeaveRequest> _requests = [];
   bool _loading = true;
@@ -26,7 +28,9 @@ class _ManagerLeaveRequestsScreenState
   Future<void> _load() async {
     final requests = await _leaveService.getAllRequests();
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       _requests = requests.reversed.toList();
@@ -80,7 +84,10 @@ class _ManagerLeaveRequestsScreenState
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    request.staffId,
+                                    _employeeService
+                                            .getEmployeeById(request.staffId)
+                                            ?.name ??
+                                        request.staffId,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                     ),

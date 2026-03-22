@@ -102,7 +102,9 @@ class AppraisalService {
       (s) => s.cycleId == cycleId && s.staffId == staffId,
     );
 
-    if (index == -1) return;
+    if (index == -1) {
+      return;
+    }
 
     submissions[index] = submissions[index].copyWith(
       managerScores: managerScores,

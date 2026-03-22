@@ -9,14 +9,14 @@ class AppTextField extends StatelessWidget {
   final TextInputType keyboardType;
 
   const AppTextField({
-    Key? key,
+    super.key,
     required this.label,
     this.hint,
     this.controller,
     this.obscureText = false,
     this.validator,
     this.keyboardType = TextInputType.text,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

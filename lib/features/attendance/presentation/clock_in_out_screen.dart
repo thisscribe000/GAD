@@ -60,7 +60,9 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
 
     final state = await _service.getClockState();
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       isClockedIn = state['isClockedIn'] as bool? ?? false;
@@ -73,12 +75,16 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
   }
 
   Future<void> _handleClock() async {
-    if (_busy) return;
+    if (_busy) {
+      return;
+    }
 
     setState(() => _busy = true);
 
     final canAuth = await _biometrics.canCheck();
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     bool authenticated = true;
 
@@ -90,7 +96,9 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
       );
     }
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     if (!authenticated) {
       setState(() => _busy = false);
@@ -107,7 +115,9 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
 
     await _loadClockState(showLoader: false);
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() => _busy = false);
 

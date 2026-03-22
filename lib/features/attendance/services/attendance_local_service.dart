@@ -9,7 +9,9 @@ class AttendanceLocalService {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_keyTodayAttendance);
 
-    if (raw == null || raw.isEmpty) return null;
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
 
     try {
       final map = jsonDecode(raw) as Map<String, dynamic>;
