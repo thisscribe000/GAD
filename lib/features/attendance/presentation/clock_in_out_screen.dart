@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:gad/core/services/biometric_service.dart';
-import 'package:gad/shared/widgets/custom_button.dart';
 import 'package:gad/shared/widgets/app_card.dart';
 import '../../../core/services/attendance_service.dart';
 
@@ -44,25 +43,16 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
   }
 
   Future<void> _refreshLiveUi() async {
-    setState(() {
-      _now = DateTime.now();
-    });
-
+    setState(() => _now = DateTime.now());
     await _loadClockState(showLoader: false);
   }
 
   Future<void> _loadClockState({bool showLoader = true}) async {
-    if (showLoader && mounted) {
-      setState(() {
-        _loading = true;
-      });
-    }
+    if (showLoader && mounted) setState(() => _loading = true);
 
     final state = await _service.getClockState();
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     setState(() {
       isClockedIn = state['isClockedIn'] as bool? ?? false;
@@ -75,16 +65,12 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
   }
 
   Future<void> _handleClock() async {
-    if (_busy) {
-      return;
-    }
+    if (_busy) return;
 
     setState(() => _busy = true);
 
     final canAuth = await _biometrics.canCheck();
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     bool authenticated = true;
 
@@ -96,9 +82,7 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
       );
     }
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     if (!authenticated) {
       setState(() => _busy = false);
@@ -115,9 +99,7 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
 
     await _loadClockState(showLoader: false);
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     setState(() => _busy = false);
 
@@ -128,6 +110,8 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     if (_loading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -137,28 +121,37 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Attendance')),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  children: [
-                    const Text(
-                      'Current Time',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: theme.colorScheme.outlineVariant),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Column(
+                children: [
+                  Text(
+                    'Current Time',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      TimeOfDay.fromDateTime(_now).format(context),
-                      style: const TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    TimeOfDay.fromDateTime(_now).format(context),
+                    style: TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.onSurface,
+                      height: 56 / 48,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),
@@ -170,52 +163,88 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
                     children: [
                       const Text(
                         'Status',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
+                          horizontal: 10,
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: isClockedIn ? Colors.green : Colors.red,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
                           isClockedIn ? 'Clocked In' : 'Not Clocked In',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const Divider(height: 24),
+                  Divider(height: 24,
+                      color: theme.colorScheme.outlineVariant),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _infoColumn('In Time', inTime ?? '--:--'),
-                      _infoColumn('Out Time', outTime ?? '--:--'),
-                      _infoColumn('Work Duration', workDuration),
+                      Expanded(
+                        child: _infoColumn('In Time', inTime ?? '--:--'),
+                      ),
+                      Expanded(
+                        child:
+                            _infoColumn('Out Time', outTime ?? '--:--'),
+                      ),
+                      Expanded(
+                        child: _infoColumn('Work Duration', workDuration),
+                      ),
                     ],
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-            CustomButton(
-              text: _busy
-                  ? 'Please wait...'
-                  : (isClockedIn ? 'Clock Out' : 'Clock In'),
-              onPressed: _busy ? () {} : _handleClock,
-              icon: Icons.fingerprint,
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: _busy ? null : _handleClock,
+                icon: _busy
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.fingerprint, size: 20),
+                label: Text(
+                  _busy
+                      ? 'Please wait...'
+                      : (isClockedIn ? 'Clock Out' : 'Clock In'),
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             TextButton(
               onPressed: () =>
                   Navigator.pushNamed(context, '/attendance/history'),
-              child: const Text('View History'),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'View History',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.primary,
+                ),
+              ),
             ),
           ],
         ),
@@ -224,17 +253,28 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
   }
 
   Widget _infoColumn(String label, String value) {
+    final theme = Theme.of(context);
     return Column(
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurfaceVariant,
+            height: 16 / 12,
+          ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: theme.colorScheme.onSurface,
+            height: 24 / 16,
+          ),
           textAlign: TextAlign.center,
         ),
       ],

@@ -7,22 +7,11 @@ class DirectoryListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final employees = [
-      {
-        'name': 'Devika Mehta',
-        'role': 'Sr. Customer Manager',
-        'dept': 'Customer Success'
-      },
-      {
-        'name': 'Lewis Clark',
-        'role': 'Software Engineer',
-        'dept': 'Engineering'
-      },
-      {
-        'name': 'Sara Bellum',
-        'role': 'HR Specialist',
-        'dept': 'Human Resources'
-      },
+      {'name': 'Devika Mehta', 'role': 'Sr. Customer Manager', 'dept': 'Customer Success'},
+      {'name': 'Lewis Clark', 'role': 'Software Engineer', 'dept': 'Engineering'},
+      {'name': 'Sara Bellum', 'role': 'HR Specialist', 'dept': 'Human Resources'},
     ];
 
     return Scaffold(
@@ -33,36 +22,69 @@ class DirectoryListScreen extends StatelessWidget {
         ],
       ),
       body: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         itemCount: employees.length,
         itemBuilder: (context, index) {
           final emp = employees[index];
-          return AppCard(
-            onTap: () {
-              Navigator.pushNamed(context, AppRouter.profile,
-                  arguments: {'employeeId': index});
-            },
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: Colors.blue[100],
-                  child: Text(emp['name']![0]),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(emp['name']!,
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text(emp['role']!,
-                          style: const TextStyle(color: Colors.grey)),
-                      Text(emp['dept']!, style: const TextStyle(fontSize: 12)),
-                    ],
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: AppCard(
+              onTap: () {
+                Navigator.pushNamed(
+                  context, AppRouter.profile,
+                  arguments: {'employeeId': index},
+                );
+              },
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: theme.colorScheme.primaryContainer
+                        .withValues(alpha: 0.3),
+                    child: Text(
+                      emp['name']![0],
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
                   ),
-                ),
-                const Icon(Icons.chevron_right),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          emp['name']!,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          emp['role']!,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        Text(
+                          emp['dept']!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
             ),
           );
         },

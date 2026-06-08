@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gad/core/services/leave_service.dart';
 import 'package:gad/core/services/employee_service.dart';
 import 'package:gad/features/leave/domain/leave_request.dart';
+import 'package:gad/shared/widgets/app_card.dart';
 
 class ManagerLeaveRequestsScreen extends StatefulWidget {
   const ManagerLeaveRequestsScreen({super.key});
@@ -15,7 +16,6 @@ class _ManagerLeaveRequestsScreenState
     extends State<ManagerLeaveRequestsScreen> {
   final LeaveService _leaveService = LeaveService();
   final EmployeeService _employeeService = EmployeeService();
-
   List<LeaveRequest> _requests = [];
   bool _loading = true;
 
@@ -27,11 +27,7 @@ class _ManagerLeaveRequestsScreenState
 
   Future<void> _load() async {
     final requests = await _leaveService.getAllRequests();
-
-    if (!mounted) {
-      return;
-    }
-
+    if (!mounted) return;
     setState(() {
       _requests = requests.reversed.toList();
       _loading = false;
@@ -56,26 +52,24 @@ class _ManagerLeaveRequestsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Leave Requests'),
-      ),
+      appBar: AppBar(title: const Text('Leave Requests')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _requests.isEmpty
               ? const Center(child: Text('No leave requests found'))
               : RefreshIndicator(
                   onRefresh: _load,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                     itemCount: _requests.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
-                      final request = _requests[index];
-
-                      return Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
+                      final req = _requests[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: AppCard(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -83,47 +77,93 @@ class _ManagerLeaveRequestsScreenState
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    _employeeService
-                                            .getEmployeeById(request.staffId)
-                                            ?.name ??
-                                        request.staffId,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
+                                  Expanded(
+                                    child: Text(
+                                      _employeeService
+                                              .getEmployeeById(req.staffId)
+                                              ?.name ??
+                                          req.staffId,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: theme.colorScheme.onSurface,
+                                      ),
                                     ),
                                   ),
-                                  Text(
-                                    request.status,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: _statusColor(request.status),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _statusColor(req.status)
+                                          .withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      req.status,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: _statusColor(req.status)
+                                            .withValues(alpha: 0.8),
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              Text('Type: ${request.leaveType}'),
-                              Text('From: ${request.startDate}'),
-                              Text('To: ${request.endDate}'),
-                              const SizedBox(height: 8),
-                              Text('Reason: ${request.reason}'),
-                              if (request.status == 'Pending') ...[
+                              Text(
+                                'Type: ${req.leaveType}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              Text(
+                                'From: ${req.startDate}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              Text(
+                                'To: ${req.endDate}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Reason: ${req.reason}',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: theme.colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.8),
+                                ),
+                              ),
+                              if (req.status == 'Pending') ...[
                                 const SizedBox(height: 12),
                                 Row(
                                   children: [
                                     Expanded(
-                                      child: ElevatedButton(
-                                        onPressed: () => _updateStatus(
-                                            request.id, 'Approved'),
-                                        child: const Text('Approve'),
+                                      child: SizedBox(
+                                        height: 40,
+                                        child: ElevatedButton(
+                                          onPressed: () => _updateStatus(
+                                              req.id, 'Approved'),
+                                          child: const Text('Approve'),
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
-                                      child: OutlinedButton(
-                                        onPressed: () => _updateStatus(
-                                            request.id, 'Rejected'),
-                                        child: const Text('Reject'),
+                                      child: SizedBox(
+                                        height: 40,
+                                        child: OutlinedButton(
+                                          onPressed: () => _updateStatus(
+                                              req.id, 'Rejected'),
+                                          child: const Text('Reject'),
+                                        ),
                                       ),
                                     ),
                                   ],

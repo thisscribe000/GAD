@@ -3,6 +3,7 @@ import 'package:gad/core/services/attendance_service.dart';
 import 'package:gad/core/services/auth_service.dart';
 import 'package:gad/core/services/employee_service.dart';
 import 'package:gad/features/directory/domain/employee.dart';
+import 'package:gad/shared/widgets/app_card.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -15,7 +16,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _authService = AuthService();
   final EmployeeService _employeeService = EmployeeService();
   final AttendanceService _attendanceService = AttendanceService();
-
   Employee? _employee;
   bool _loading = true;
   String _averageWorkDuration = '--';
@@ -28,43 +28,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadProfile() async {
     final staffId = await _authService.getCurrentUser();
-    final averageWorkDuration =
-        await _attendanceService.getAverageWorkDurationText();
+    final avg = await _attendanceService.getAverageWorkDurationText();
 
     if (staffId != null) {
       final employee = _employeeService.getEmployeeById(staffId);
-
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       setState(() {
         _employee = employee;
-        _averageWorkDuration = averageWorkDuration;
+        _averageWorkDuration = avg;
         _loading = false;
       });
     } else {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       setState(() {
-        _averageWorkDuration = averageWorkDuration;
+        _averageWorkDuration = avg;
         _loading = false;
       });
     }
   }
 
-  Widget _infoTile(String label, String value) {
-    return Card(
-      child: ListTile(
-        title: Text(label),
-        subtitle: Text(value),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     if (_loading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -78,33 +64,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-      ),
+      appBar: AppBar(title: const Text('Profile')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
         children: [
-          const Icon(
-            Icons.account_circle,
-            size: 100,
-            color: Colors.grey,
+          Center(
+            child: CircleAvatar(
+              radius: 48,
+              backgroundColor: theme.colorScheme.primaryContainer
+                  .withValues(alpha: 0.3),
+              child: Text(
+                _employee!.name.isNotEmpty ? _employee!.name[0] : '?',
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 16),
           Center(
             child: Text(
               _employee!.name,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+              style: theme.textTheme.headlineLarge?.copyWith(
+                color: theme.colorScheme.onSurface,
               ),
             ),
           ),
           const SizedBox(height: 24),
-          _infoTile("Staff ID", _employee!.id),
-          _infoTile("Department", _employee!.department),
-          _infoTile("Position", _employee!.position),
-          _infoTile("Role", _employee!.role),
-          _infoTile("Average Work Duration", _averageWorkDuration),
+          _infoTile(theme, "Staff ID", _employee!.id),
+          const SizedBox(height: 12),
+          _infoTile(theme, "Department", _employee!.department),
+          const SizedBox(height: 12),
+          _infoTile(theme, "Position", _employee!.position),
+          const SizedBox(height: 12),
+          _infoTile(theme, "Role", _employee!.role),
+          const SizedBox(height: 12),
+          _infoTile(theme, "Avg Work Duration", _averageWorkDuration),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoTile(ThemeData theme, String label, String value) {
+    return AppCard(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 14,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
         ],
       ),
     );

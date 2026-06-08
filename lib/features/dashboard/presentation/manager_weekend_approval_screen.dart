@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/services/weekend_work_service.dart';
+import 'package:gad/core/services/weekend_work_service.dart';
+import 'package:gad/shared/widgets/app_card.dart';
 
 class ManagerWeekendApprovalScreen extends StatefulWidget {
   const ManagerWeekendApprovalScreen({super.key});
@@ -14,7 +15,6 @@ class _ManagerWeekendApprovalScreenState
   final WeekendWorkService _service = WeekendWorkService();
   List<String> _approvedIds = [];
 
-  // This will eventually be replaced by a call to your DirectoryService
   final List<Map<String, String>> _mockStaff = [
     {'id': '101', 'name': 'Staff User 1'},
     {'id': '102', 'name': 'Staff User 2'},
@@ -34,6 +34,8 @@ class _ManagerWeekendApprovalScreenState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Weekend Work Control'),
@@ -43,40 +45,83 @@ class _ManagerWeekendApprovalScreenState
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.blue.withOpacity(0.1),
-            child: const Row(
+            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+            child: Row(
               children: [
-                Icon(Icons.info_outline, color: Colors.blue),
-                SizedBox(width: 12),
+                Icon(
+                  Icons.info_outline,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Grant permission to staff who need to clock in during the weekend.',
-                    style: TextStyle(fontSize: 13),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
           Expanded(
-            child: ListView.separated(
+            child: ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
               itemCount: _mockStaff.length,
-              separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final staff = _mockStaff[index];
                 final staffId = staff['id']!;
                 final isApproved = _approvedIds.contains(staffId);
-
-                return ListTile(
-                  title: Text(staff['name']!,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('Employee ID: $staffId'),
-                  trailing: Switch.adaptive(
-                    value: isApproved,
-                    activeColor: Colors.green,
-                    onChanged: (bool value) async {
-                      await _service.toggleApproval(staffId, value);
-                      _loadPermissions();
-                    },
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: AppCard(
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: theme.colorScheme.primaryContainer
+                              .withValues(alpha: 0.3),
+                          child: Text(
+                            staff['name']![0],
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                staff['name']!,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                              Text(
+                                'Employee ID: $staffId',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch.adaptive(
+                          value: isApproved,
+                          activeTrackColor: theme.colorScheme.primary,
+                          onChanged: (bool value) async {
+                            await _service.toggleApproval(staffId, value);
+                            _loadPermissions();
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },

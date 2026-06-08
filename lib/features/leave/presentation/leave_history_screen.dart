@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gad/core/services/auth_service.dart';
 import 'package:gad/core/services/leave_service.dart';
 import 'package:gad/features/leave/domain/leave_request.dart';
+import 'package:gad/shared/widgets/app_card.dart';
 
 class LeaveHistoryScreen extends StatefulWidget {
   const LeaveHistoryScreen({super.key});
@@ -13,7 +14,6 @@ class LeaveHistoryScreen extends StatefulWidget {
 class _LeaveHistoryScreenState extends State<LeaveHistoryScreen> {
   final LeaveService _leaveService = LeaveService();
   final AuthService _authService = AuthService();
-
   List<LeaveRequest> _requests = [];
   bool _loading = true;
 
@@ -26,9 +26,7 @@ class _LeaveHistoryScreenState extends State<LeaveHistoryScreen> {
   Future<void> _load() async {
     final staffId = await _authService.getCurrentUser();
     if (staffId == null || staffId.isEmpty) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       setState(() {
         _requests = [];
         _loading = false;
@@ -37,11 +35,7 @@ class _LeaveHistoryScreenState extends State<LeaveHistoryScreen> {
     }
 
     final requests = await _leaveService.getRequestsForStaff(staffId);
-
-    if (!mounted) {
-      return;
-    }
-
+    if (!mounted) return;
     setState(() {
       _requests = requests;
       _loading = false;
@@ -61,26 +55,24 @@ class _LeaveHistoryScreenState extends State<LeaveHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Leave Requests'),
-      ),
+      appBar: AppBar(title: const Text('My Leave Requests')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _requests.isEmpty
               ? const Center(child: Text('No leave requests yet'))
               : RefreshIndicator(
                   onRefresh: _load,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                     itemCount: _requests.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
-                      final request = _requests[index];
-
-                      return Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
+                      final req = _requests[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: AppCard(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -88,27 +80,61 @@ class _LeaveHistoryScreenState extends State<LeaveHistoryScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    request.leaveType,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                                  Expanded(
+                                    child: Text(
+                                      req.leaveType,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: theme.colorScheme.onSurface,
+                                      ),
                                     ),
                                   ),
-                                  Text(
-                                    request.status,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: _statusColor(request.status),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _statusColor(req.status)
+                                          .withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      req.status,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: _statusColor(req.status)
+                                            .withValues(alpha: 0.8),
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              Text('From: ${request.startDate}'),
-                              Text('To: ${request.endDate}'),
-                              const SizedBox(height: 8),
-                              Text('Reason: ${request.reason}'),
+                              Text(
+                                'From: ${req.startDate}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'To: ${req.endDate}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Reason: ${req.reason}',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: theme.colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.8),
+                                ),
+                              ),
                             ],
                           ),
                         ),

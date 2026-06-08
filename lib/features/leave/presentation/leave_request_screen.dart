@@ -12,19 +12,14 @@ class LeaveRequestScreen extends StatefulWidget {
 class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
   final LeaveService _leaveService = LeaveService();
   final AuthService _authService = AuthService();
-
   final TextEditingController _reasonController = TextEditingController();
-
   String _leaveType = 'Annual Leave';
   DateTime? _startDate;
   DateTime? _endDate;
   bool _submitting = false;
 
   final List<String> _leaveTypes = const [
-    'Annual Leave',
-    'Sick Leave',
-    'Casual Leave',
-    'Emergency Leave',
+    'Annual Leave', 'Sick Leave', 'Casual Leave', 'Emergency Leave',
   ];
 
   @override
@@ -43,11 +38,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
       lastDate: now.add(const Duration(days: 365)),
       initialDate: _startDate ?? now,
     );
-
-    if (picked == null) {
-      return;
-    }
-
+    if (picked == null) return;
     setState(() {
       _startDate = picked;
       if (_endDate != null && _endDate!.isBefore(picked)) {
@@ -64,27 +55,16 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
       lastDate: base.add(const Duration(days: 365)),
       initialDate: _endDate ?? base,
     );
-
-    if (picked == null) {
-      return;
-    }
-
-    setState(() {
-      _endDate = picked;
-    });
+    if (picked == null) return;
+    setState(() => _endDate = picked);
   }
 
   Future<void> _submit() async {
-    if (_submitting) {
-      return;
-    }
-
+    if (_submitting) return;
     final staffId = await _authService.getCurrentUser();
 
     if (staffId == null || staffId.isEmpty) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Unable to identify current user')),
       );
@@ -92,9 +72,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
     }
 
     if (_startDate == null || _endDate == null) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select start and end dates')),
       );
@@ -102,18 +80,14 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
     }
 
     if (_reasonController.text.trim().isEmpty) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a reason')),
       );
       return;
     }
 
-    setState(() {
-      _submitting = true;
-    });
+    setState(() => _submitting = true);
 
     await _leaveService.submitRequest(
       staffId: staffId,
@@ -123,10 +97,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
       reason: _reasonController.text.trim(),
     );
 
-    if (!mounted) {
-      return;
-    }
-
+    if (!mounted) return;
     setState(() {
       _submitting = false;
       _reasonController.clear();
@@ -134,7 +105,6 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
       _endDate = null;
       _leaveType = 'Annual Leave';
     });
-
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Leave request submitted')),
     );
@@ -142,69 +112,137 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Request Leave'),
-      ),
+      appBar: AppBar(title: const Text('Request Leave')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         children: [
           DropdownButtonFormField<String>(
             initialValue: _leaveType,
             items: _leaveTypes
-                .map(
-                  (type) => DropdownMenuItem(
-                    value: type,
-                    child: Text(type),
-                  ),
-                )
+                .map((type) => DropdownMenuItem(
+                      value: type,
+                      child: Text(type),
+                    ))
                 .toList(),
             onChanged: (value) {
-              if (value == null) {
-                return;
-              }
-              setState(() {
-                _leaveType = value;
-              });
+              if (value == null) return;
+              setState(() => _leaveType = value);
             },
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Leave Type',
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: theme.colorScheme.outlineVariant),
+              ),
             ),
           ),
           const SizedBox(height: 16),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Start Date'),
-            subtitle: Text(
-                _startDate == null ? 'Select start date' : _fmt(_startDate!)),
-            trailing: const Icon(Icons.calendar_today),
-            onTap: _pickStartDate,
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border.all(color: theme.colorScheme.outlineVariant),
+              borderRadius: BorderRadius.circular(12),
+              color: theme.colorScheme.surface,
+            ),
+            child: Column(
+              children: [
+                InkWell(
+                  onTap: _pickStartDate,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Start Date',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _startDate == null
+                                ? 'Select start date'
+                                : _fmt(_startDate!),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Icon(
+                        Icons.calendar_today,
+                        size: 20,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 24),
+                InkWell(
+                  onTap: _pickEndDate,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'End Date',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _endDate == null
+                                ? 'Select end date'
+                                : _fmt(_endDate!),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Icon(
+                        Icons.calendar_today,
+                        size: 20,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          const Divider(),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('End Date'),
-            subtitle:
-                Text(_endDate == null ? 'Select end date' : _fmt(_endDate!)),
-            trailing: const Icon(Icons.calendar_today),
-            onTap: _pickEndDate,
-          ),
-          const Divider(),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           TextField(
             controller: _reasonController,
             maxLines: 5,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Reason',
               alignLabelWithHint: true,
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: theme.colorScheme.outlineVariant),
+              ),
             ),
           ),
           const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _submitting ? null : _submit,
-            child: Text(_submitting ? 'Submitting...' : 'Submit Request'),
+          SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              onPressed: _submitting ? null : _submit,
+              child: Text(_submitting ? 'Submitting...' : 'Submit Request'),
+            ),
           ),
         ],
       ),

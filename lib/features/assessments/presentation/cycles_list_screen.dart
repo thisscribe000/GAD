@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gad/core/router/app_router.dart';
 import 'package:gad/core/services/appraisal_service.dart';
-import 'package:gad/features/assessments/domain/appraisal_cycle.dart';
 import 'package:gad/shared/widgets/app_card.dart';
 
 class CyclesListScreen extends StatelessWidget {
@@ -9,49 +8,37 @@ class CyclesListScreen extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final service = AppraisalService();
-    final List<AppraisalCycle> cycles = service.getCycles();
+    final cycles = service.getCycles();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Appraisal Cycles')),
       body: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         itemCount: cycles.length,
         itemBuilder: (context, index) {
           final cycle = cycles[index];
-
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: AppCard(
               onTap: () {
                 if (cycle.isOpen) {
                   Navigator.pushNamed(
-                    context,
-                    AppRouter.appraisalForm,
+                    context, AppRouter.appraisalForm,
                     arguments: {'cycleId': cycle.id},
                   );
                 } else {
                   Navigator.pushNamed(
-                    context,
-                    AppRouter.resultsView,
+                    context, AppRouter.resultsView,
                     arguments: {'resultId': cycle.id},
                   );
                 }
@@ -65,37 +52,66 @@ class CyclesListScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           cycle.title,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            color: theme.colorScheme.onSurface,
                           ),
                         ),
                       ),
-                      Chip(
-                        label: Text(cycle.isOpen ? 'Open' : 'Closed'),
-                        backgroundColor:
-                            cycle.isOpen ? Colors.orange : Colors.green,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: (cycle.isOpen ? Colors.orange : Colors.green)
+                              .withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          cycle.isOpen ? 'Open' : 'Closed',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: cycle.isOpen
+                                ? Colors.orange.shade800
+                                : Colors.green.shade800,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Start: ${_formatDate(cycle.startDate)}',
-                    style: const TextStyle(color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'End: ${_formatDate(cycle.endDate)}',
-                    style: const TextStyle(color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  LinearProgressIndicator(
-                    value: cycle.isOpen ? 0.5 : 1.0,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: cycle.isOpen ? 0.5 : 1.0,
+                      backgroundColor:
+                          theme.colorScheme.surfaceContainerHighest,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     cycle.isOpen ? 'In progress' : 'Completed',
-                    style: const TextStyle(fontSize: 12),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),

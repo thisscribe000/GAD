@@ -3,7 +3,10 @@ import 'package:gad/core/router/app_router.dart';
 import 'package:gad/core/services/auth_service.dart';
 import 'package:gad/core/services/attendance_service.dart';
 import 'package:gad/core/services/appraisal_service.dart';
+import 'package:gad/core/services/employee_service.dart';
 import 'package:gad/shared/widgets/app_card.dart';
+import 'package:gad/shared/widgets/app_drawer.dart';
+import 'package:gad/shared/widgets/stat_card.dart';
 
 class StaffDashboard extends StatefulWidget {
   const StaffDashboard({super.key});
@@ -16,10 +19,13 @@ class _StaffDashboardState extends State<StaffDashboard> {
   final AttendanceService _attendanceService = AttendanceService();
   final AppraisalService _appraisalService = AppraisalService();
   final AuthService _authService = AuthService();
+  final EmployeeService _employeeService = EmployeeService();
 
   int _daysPresent = 0;
   int _pendingReviews = 0;
   bool _loading = true;
+  String _userName = '';
+  String _clockStatus = '';
 
   @override
   void initState() {
@@ -29,23 +35,31 @@ class _StaffDashboardState extends State<StaffDashboard> {
 
   Future<void> _loadDashboard() async {
     final analytics = await _attendanceService.getAttendanceAnalytics();
+    final staffId = await _authService.getCurrentUser();
 
     int pending = 0;
-    final staffId = await _authService.getCurrentUser();
     if (staffId != null) {
+      final emp = _employeeService.getEmployeeById(staffId);
+      if (emp != null) _userName = emp.name;
+
       final cycles = _appraisalService.getCycles().where((c) => c.isOpen);
       for (final cycle in cycles) {
         final sub = await _appraisalService.getSubmission(
             cycleId: cycle.id, staffId: staffId);
-        if (sub == null || !sub.submitted) {
-          pending++;
-        }
+        if (sub == null || !sub.submitted) pending++;
+      }
+
+      final state = await _attendanceService.getClockState();
+      final isClockedIn = state['isClockedIn'] as bool? ?? false;
+      final inTime = state['inTime'] as String?;
+      if (isClockedIn && inTime != null) {
+        _clockStatus = 'Clocked in at $inTime';
+      } else {
+        _clockStatus = 'Not clocked in yet';
       }
     }
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     setState(() {
       _daysPresent = analytics['present'] as int? ?? 0;
@@ -56,216 +70,240 @@ class _StaffDashboardState extends State<StaffDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () {
-              Navigator.pushNamed(context, AppRouter.profile);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              final auth = AuthService();
-              await auth.logout();
-
-              if (!context.mounted) {
-                return;
-              }
-
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                AppRouter.login,
-                (route) => false,
-              );
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
+      drawer: AppDrawer(
+        userName: _userName,
+        userRole: 'Staff',
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadDashboard,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  AppCard(
-                    child: Wrap(
-                      alignment: WrapAlignment.spaceBetween,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      runSpacing: 12,
-                      children: [
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(minWidth: 220),
-                          child: const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Attendance',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 18),
-                              ),
-                              SizedBox(height: 4),
-                              Text('Clock in or out for today',
-                                  style: TextStyle(color: Colors.grey)),
-                            ],
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.pushNamed(context, AppRouter.attendance);
-                          },
-                          child: const Text('Open Menu'),
-                        ),
-                      ],
-                    ),
+      appBar: AppBar(
+        leading: Builder(
+          builder: (ctx) => Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: GestureDetector(
+              onTap: () => Scaffold.of(ctx).openDrawer(),
+              child: CircleAvatar(
+                radius: 16,
+                backgroundColor: theme.colorScheme.secondaryContainer,
+                child: Text(
+                  _userName.isNotEmpty
+                      ? _userName.split(' ').map((e) => e[0]).take(2).join()
+                      : 'U',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSecondaryContainer,
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      _statCard(context, 'Days Present', '$_daysPresent',
-                          Icons.calendar_today),
-                      const SizedBox(width: 12),
-                      _statCard(context, 'Pending Reviews', '$_pendingReviews',
-                          Icons.assignment),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Upcoming Tasks',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  AppCard(
-                    child: ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withValues(alpha: 0.1),
-                            shape: BoxShape.circle),
-                        child: Icon(Icons.assignment_turned_in,
-                            color: Theme.of(context).colorScheme.primary),
-                      ),
-                      title: const Text('Performance Appraisal'),
-                      subtitle: const Text('Open appraisal cycles'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () {
-                        Navigator.pushNamed(context, AppRouter.assessments);
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  AppCard(
-                    child: ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                            color: Colors.orange.withValues(alpha: 0.1),
-                            shape: BoxShape.circle),
-                        child: const Icon(Icons.history, color: Colors.orange),
-                      ),
-                      title: const Text('Attendance History'),
-                      subtitle: const Text('View past attendance records'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () {
-                        Navigator.pushNamed(
-                            context, AppRouter.attendanceHistory);
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  AppCard(
-                    child: ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.1),
-                            shape: BoxShape.circle),
-                        child:
-                            const Icon(Icons.event_note, color: Colors.green),
-                      ),
-                      title: const Text('Request Leave'),
-                      subtitle: const Text('Submit a new leave request'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () {
-                        Navigator.pushNamed(context, AppRouter.leaveRequest);
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  AppCard(
-                    child: ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                            color: Colors.teal.withValues(alpha: 0.1),
-                            shape: BoxShape.circle),
-                        child: const Icon(Icons.list_alt, color: Colors.teal),
-                      ),
-                      title: const Text('My Leave Requests'),
-                      subtitle: const Text('View leave request history'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () {
-                        Navigator.pushNamed(context, AppRouter.leaveHistory);
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                ],
+                ),
               ),
             ),
+          ),
+        ),
+        title: const Text('Dashboard'),
+      ),
+      body: RefreshIndicator(
+        onRefresh: _loadDashboard,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+          children: _loading
+              ? [const Center(child: CircularProgressIndicator())]
+              : [
+                Container(
+                  width: double.infinity,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer
+                        .withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: theme.colorScheme.primaryContainer
+                          .withValues(alpha: 0.15),
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Good ${_getGreeting()},',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _userName,
+                        style: theme.textTheme.headlineLarge?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                AppCard(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Attendance',
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _clockStatus,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      OutlinedButton(
+                        onPressed: () => Navigator.pushNamed(
+                            context, AppRouter.attendance),
+                        child: const Text('Open Menu'),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: StatCard(
+                        icon: Icons.calendar_today,
+                        value: '$_daysPresent',
+                        label: 'Days Present',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: StatCard(
+                        icon: Icons.assignment_turned_in,
+                        value: '$_pendingReviews',
+                        label: 'Pending Reviews',
+                        iconColor: theme.colorScheme.tertiaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Quick Tasks',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _taskCard(
+                  context,
+                  icon: Icons.assignment_turned_in,
+                  color: theme.colorScheme.primary,
+                  title: 'Performance Appraisal',
+                  subtitle: 'Open appraisal cycles',
+                  route: AppRouter.assessments,
+                ),
+                const SizedBox(height: 8),
+                _taskCard(
+                  context,
+                  icon: Icons.history,
+                  color: Colors.orange,
+                  title: 'Attendance History',
+                  subtitle: 'View past attendance records',
+                  route: AppRouter.attendanceHistory,
+                ),
+                const SizedBox(height: 8),
+                _taskCard(
+                  context,
+                  icon: Icons.event_note,
+                  color: Colors.green,
+                  title: 'Request Leave',
+                  subtitle: 'Submit a new leave request',
+                  route: AppRouter.leaveRequest,
+                ),
+                const SizedBox(height: 8),
+                _taskCard(
+                  context,
+                  icon: Icons.list_alt,
+                  color: Colors.teal,
+                  title: 'My Leave Requests',
+                  subtitle: 'View leave request history',
+                  route: AppRouter.leaveHistory,
+                ),
+              ],
+        ),
+      ),
     );
   }
 
-  Widget _statCard(
-    BuildContext context,
-    String label,
-    String value,
-    IconData icon,
-  ) {
-    return Expanded(
-      child: AppCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context)
-                    .colorScheme
-                    .primary
-                    .withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: Theme.of(context).colorScheme.primary),
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Morning';
+    if (hour < 17) return 'Afternoon';
+    return 'Evening';
+  }
+
+  Widget _taskCard(
+    BuildContext context, {
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    required String route,
+  }) {
+    final theme = Theme.of(context);
+    return AppCard(
+      onTap: () => Navigator.pushNamed(context, route),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(height: 16),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    height: 20 / 14,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 16 / 12,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                  color: Colors.grey, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
+          ),
+          Icon(Icons.chevron_right,
+              color: theme.colorScheme.outline, size: 20),
+        ],
       ),
     );
   }
