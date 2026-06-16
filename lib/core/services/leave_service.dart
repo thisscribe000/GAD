@@ -1,25 +1,42 @@
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../supabase/supabase_config.dart';
 import '../../features/leave/domain/leave_request.dart';
 
 class LeaveService {
-  static const _leaveRequestsKey = 'leave_requests';
-
   Future<List<LeaveRequest>> getAllRequests() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getStringList(_leaveRequestsKey) ?? [];
-    return raw.map((e) => LeaveRequest.fromJson(jsonDecode(e))).toList();
-  }
+    final data = await supabase
+        .from('leave_requests')
+        .select('id, staff_id, leave_type, start_date, end_date, reason, status, submitted_at')
+        .order('submitted_at', ascending: false);
 
-  Future<void> _saveAllRequests(List<LeaveRequest> requests) async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = requests.map((e) => jsonEncode(e.toJson())).toList();
-    await prefs.setStringList(_leaveRequestsKey, raw);
+    return data.map((row) => LeaveRequest(
+      id: row['id'] as String,
+      staffId: row['staff_id'] as String,
+      leaveType: row['leave_type'] as String,
+      startDate: row['start_date'] as String,
+      endDate: row['end_date'] as String,
+      reason: (row['reason'] as String?) ?? '',
+      status: row['status'] as String,
+      submittedAt: row['submitted_at'] as String,
+    )).toList();
   }
 
   Future<List<LeaveRequest>> getRequestsForStaff(String staffId) async {
-    final all = await getAllRequests();
-    return all.where((e) => e.staffId == staffId).toList().reversed.toList();
+    final data = await supabase
+        .from('leave_requests')
+        .select('id, staff_id, leave_type, start_date, end_date, reason, status, submitted_at')
+        .eq('staff_id', staffId)
+        .order('submitted_at', ascending: false);
+
+    return data.map((row) => LeaveRequest(
+      id: row['id'] as String,
+      staffId: row['staff_id'] as String,
+      leaveType: row['leave_type'] as String,
+      startDate: row['start_date'] as String,
+      endDate: row['end_date'] as String,
+      reason: (row['reason'] as String?) ?? '',
+      status: row['status'] as String,
+      submittedAt: row['submitted_at'] as String,
+    )).toList();
   }
 
   Future<void> submitRequest({
@@ -29,65 +46,40 @@ class LeaveService {
     required String endDate,
     required String reason,
   }) async {
-    final all = await getAllRequests();
-
-    final request = LeaveRequest(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
-      staffId: staffId,
-      leaveType: leaveType,
-      startDate: startDate,
-      endDate: endDate,
-      reason: reason,
-      status: 'Pending',
-      submittedAt: DateTime.now().toIso8601String(),
-    );
-
-    all.add(request);
-    await _saveAllRequests(all);
+    await supabase.from('leave_requests').insert({
+      'staff_id': staffId,
+      'leave_type': leaveType,
+      'start_date': startDate,
+      'end_date': endDate,
+      'reason': reason,
+      'status': 'Pending',
+      'submitted_at': DateTime.now().toUtc().toIso8601String(),
+    });
   }
 
   Future<void> updateStatus({
     required String requestId,
     required String status,
   }) async {
-    final all = await getAllRequests();
-    final index = all.indexWhere((e) => e.id == requestId);
-
-    if (index == -1) {
-      return;
-    }
-
-    all[index] = all[index].copyWith(status: status);
-    await _saveAllRequests(all);
+    await supabase
+        .from('leave_requests')
+        .update({
+          'status': status,
+          'reviewed_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', requestId);
   }
 
   Future<int> getApprovedLeaveCountToday() async {
-    final all = await getAllRequests();
-    final today = DateTime.now();
+    final today = DateTime.now().toIso8601String().split('T')[0];
 
-    int count = 0;
+    final data = await supabase
+        .from('leave_requests')
+        .select('id')
+        .eq('status', 'Approved')
+        .lte('start_date', today)
+        .gte('end_date', today);
 
-    for (final request in all) {
-      if (request.status != 'Approved') {
-        continue;
-      }
-
-      final start = DateTime.tryParse(request.startDate);
-      final end = DateTime.tryParse(request.endDate);
-
-      if (start == null || end == null) {
-        continue;
-      }
-
-      final startOnly = DateTime(start.year, start.month, start.day);
-      final endOnly = DateTime(end.year, end.month, end.day);
-      final todayOnly = DateTime(today.year, today.month, today.day);
-
-      final inRange =
-          !todayOnly.isBefore(startOnly) && !todayOnly.isAfter(endOnly);
-      if (inRange) count++;
-    }
-
-    return count;
+    return data.length;
   }
 }

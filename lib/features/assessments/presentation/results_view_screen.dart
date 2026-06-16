@@ -29,8 +29,8 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
   }
 
   Future<void> _init() async {
-    final cycles = _service.getCycles();
-    final questions = _service.getQuestions();
+    final cycles = await _service.getCycles();
+    final questions = await _service.getQuestions();
     final staffId = await _authService.getCurrentUser() ?? '';
 
     for (final cycle in cycles) {
@@ -155,7 +155,7 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
             const SizedBox(height: 16),
             _buildCommentSection(theme, 'Employee Comments', _submission!.comment, 'No comments added'),
             const SizedBox(height: 12),
-            _buildCommentSection(theme, 'Manager Comments', _submission!.managerComment, 'No manager comments yet'),
+            _buildCommentSection(theme, 'Admin Comments', _submission!.managerComment, 'No admin comments yet'),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -217,7 +217,7 @@ class _ResultsViewScreenState extends State<ResultsViewScreen> {
           Text(
             managerScore == null
                 ? 'Self: $selfScore/$maxScore'
-                : 'Self: $selfScore/$maxScore  •  Manager: $managerScore/$maxScore',
+                : 'Self: $selfScore/$maxScore  •  Admin: $managerScore/$maxScore',
             style: TextStyle(
               fontSize: 12,
               color: theme.colorScheme.onSurfaceVariant,

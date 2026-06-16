@@ -1,34 +1,48 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import '../supabase/supabase_config.dart';
 
 class WeekendWorkService {
-  static const String _storageKey = 'weekend_approved_staff_ids';
-
   bool isWeekend(DateTime date) {
     return date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
   }
 
   Future<bool> isStaffApproved(String staffId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final approvedList = prefs.getStringList(_storageKey) ?? [];
-    return approvedList.contains(staffId);
+    final data = await supabase
+        .from('weekend_permissions')
+        .select('id')
+        .eq('staff_id', staffId)
+        .maybeSingle();
+
+    return data != null;
   }
 
   Future<void> toggleApproval(String staffId, bool shouldApprove) async {
-    final prefs = await SharedPreferences.getInstance();
-    List<String> approvedList = prefs.getStringList(_storageKey) ?? [];
-
     if (shouldApprove) {
-      if (!approvedList.contains(staffId)) {
-        approvedList.add(staffId);
+      final existing = await supabase
+          .from('weekend_permissions')
+          .select('id')
+          .eq('staff_id', staffId)
+          .maybeSingle();
+
+      if (existing == null) {
+        await supabase.from('weekend_permissions').insert({
+          'staff_id': staffId,
+          'approved_by': staffId,
+          'granted_at': DateTime.now().toUtc().toIso8601String(),
+        });
       }
     } else {
-      approvedList.remove(staffId);
+      await supabase
+          .from('weekend_permissions')
+          .delete()
+          .eq('staff_id', staffId);
     }
-    await prefs.setStringList(_storageKey, approvedList);
   }
 
   Future<List<String>> getApprovedStaffIds() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList(_storageKey) ?? [];
+    final data = await supabase
+        .from('weekend_permissions')
+        .select('staff_id');
+
+    return data.map((row) => row['staff_id'] as String).toList();
   }
 }

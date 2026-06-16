@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:gad/core/services/weekend_work_service.dart';
 import 'package:gad/shared/widgets/app_card.dart';
 
-class ManagerWeekendApprovalScreen extends StatefulWidget {
-  const ManagerWeekendApprovalScreen({super.key});
+class AdminWeekendApprovalScreen extends StatefulWidget {
+  const AdminWeekendApprovalScreen({super.key});
 
   @override
-  State<ManagerWeekendApprovalScreen> createState() =>
-      _ManagerWeekendApprovalScreenState();
+  State<AdminWeekendApprovalScreen> createState() =>
+      _AdminWeekendApprovalScreenState();
 }
 
-class _ManagerWeekendApprovalScreenState
-    extends State<ManagerWeekendApprovalScreen> {
+class _AdminWeekendApprovalScreenState
+    extends State<AdminWeekendApprovalScreen> {
   final WeekendWorkService _service = WeekendWorkService();
   List<String> _approvedIds = [];
 

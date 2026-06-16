@@ -3,15 +3,15 @@ import 'package:gad/core/services/appraisal_service.dart';
 import 'package:gad/features/assessments/domain/appraisal_submission.dart';
 import 'package:gad/shared/widgets/app_card.dart';
 
-class ManagerReviewScreen extends StatefulWidget {
+class AdminReviewScreen extends StatefulWidget {
   final AppraisalSubmission? submission;
-  const ManagerReviewScreen({super.key, this.submission});
+  const AdminReviewScreen({super.key, this.submission});
 
   @override
-  State<ManagerReviewScreen> createState() => _ManagerReviewScreenState();
+  State<AdminReviewScreen> createState() => _AdminReviewScreenState();
 }
 
-class _ManagerReviewScreenState extends State<ManagerReviewScreen> {
+class _AdminReviewScreenState extends State<AdminReviewScreen> {
   final AppraisalService _service = AppraisalService();
   final Map<String, int> _managerScores = {};
   final TextEditingController _commentController = TextEditingController();
@@ -67,7 +67,7 @@ class _ManagerReviewScreenState extends State<ManagerReviewScreen> {
     final submission = widget.submission;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Manager Review')),
+      appBar: AppBar(title: const Text('Admin Review')),
       body: submission == null
           ? const Center(child: Text('No submission provided'))
           : ListView(
@@ -195,7 +195,7 @@ class _ManagerReviewScreenState extends State<ManagerReviewScreen> {
                   controller: _commentController,
                   maxLines: 4,
                   decoration: InputDecoration(
-                    labelText: 'Manager Comment',
+                    labelText: 'Admin Comment',
                     alignLabelWithHint: true,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),

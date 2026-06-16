@@ -31,7 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final avg = await _attendanceService.getAverageWorkDurationText();
 
     if (staffId != null) {
-      final employee = _employeeService.getEmployeeById(staffId);
+      final employee = await _employeeService.getEmployeeById(staffId);
       if (!mounted) return;
       setState(() {
         _employee = employee;

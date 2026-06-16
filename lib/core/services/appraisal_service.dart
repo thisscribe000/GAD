@@ -1,93 +1,93 @@
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../supabase/supabase_config.dart';
 import '../../features/assessments/domain/appraisal_cycle.dart';
 import '../../features/assessments/domain/kpi_question.dart';
 import '../../features/assessments/domain/appraisal_submission.dart';
 
 class AppraisalService {
-  static const _submissionKey = 'appraisal_submissions';
+  Future<List<AppraisalCycle>> getCycles() async {
+    final data = await supabase
+        .from('appraisal_cycles')
+        .select('id, title, start_date, end_date, is_open')
+        .order('start_date', ascending: false);
 
-  List<AppraisalCycle> getCycles() {
-    return [
-      AppraisalCycle(
-        id: 'q1_2026',
-        title: 'Q1 2026 Performance Review',
-        startDate: DateTime(2026, 1, 1),
-        endDate: DateTime(2026, 3, 31),
-        isOpen: true,
-      ),
-      AppraisalCycle(
-        id: 'q2_2026',
-        title: 'Q2 2026 Performance Review',
-        startDate: DateTime(2026, 4, 1),
-        endDate: DateTime(2026, 6, 30),
-        isOpen: false,
-      ),
-    ];
+    return data.map((row) => AppraisalCycle(
+      id: row['id'] as String,
+      title: row['title'] as String,
+      startDate: DateTime.parse(row['start_date'] as String),
+      endDate: DateTime.parse(row['end_date'] as String),
+      isOpen: row['is_open'] as bool,
+    )).toList();
   }
 
-  List<KpiQuestion> getQuestions() {
-    return [
-      KpiQuestion(id: 'quality', question: 'Quality of Work', maxScore: 5),
-      KpiQuestion(id: 'communication', question: 'Communication', maxScore: 5),
-      KpiQuestion(id: 'teamwork', question: 'Team Collaboration', maxScore: 5),
-      KpiQuestion(id: 'initiative', question: 'Initiative', maxScore: 5),
-      KpiQuestion(id: 'leadership', question: 'Leadership', maxScore: 5),
-    ];
-  }
+  Future<List<KpiQuestion>> getQuestions() async {
+    final data = await supabase
+        .from('kpi_questions')
+        .select('id, question, max_score')
+        .order('id');
 
-  Future<List<AppraisalSubmission>> _getAllSubmissionsInternal() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getStringList(_submissionKey) ?? [];
-
-    return raw.map((e) => AppraisalSubmission.fromJson(jsonDecode(e))).toList();
+    return data.map((row) => KpiQuestion(
+      id: row['id'] as String,
+      question: row['question'] as String,
+      maxScore: row['max_score'] as int,
+    )).toList();
   }
 
   Future<List<AppraisalSubmission>> getAllSubmissions() async {
-    return _getAllSubmissionsInternal();
-  }
+    final data = await supabase
+        .from('appraisal_submissions')
+        .select('cycle_id, staff_id, self_scores, comment, submitted, manager_scores, manager_comment, reviewed')
+        .order('created_at', ascending: false);
 
-  Future<void> _saveAllSubmissions(
-      List<AppraisalSubmission> submissions) async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = submissions.map((e) => jsonEncode(e.toJson())).toList();
-    await prefs.setStringList(_submissionKey, raw);
+    return data.map((row) => _rowToSubmission(row)).toList();
   }
 
   Future<void> saveDraft(AppraisalSubmission submission) async {
-    final submissions = await _getAllSubmissionsInternal();
+    final existing = await supabase
+        .from('appraisal_submissions')
+        .select('id')
+        .eq('cycle_id', submission.cycleId)
+        .eq('staff_id', submission.staffId)
+        .maybeSingle();
 
-    final index = submissions.indexWhere(
-      (s) => s.cycleId == submission.cycleId && s.staffId == submission.staffId,
-    );
+    final payload = {
+      'cycle_id': submission.cycleId,
+      'staff_id': submission.staffId,
+      'self_scores': submission.selfScores,
+      'comment': submission.comment,
+      'submitted': submission.submitted,
+      'manager_scores': submission.managerScores.isEmpty ? null : submission.managerScores,
+      'manager_comment': submission.managerComment.isEmpty ? null : submission.managerComment,
+      'reviewed': submission.reviewed,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    };
 
-    if (index >= 0) {
-      submissions[index] = submission;
+    if (existing != null) {
+      await supabase
+          .from('appraisal_submissions')
+          .update(payload)
+          .eq('id', existing['id'] as String);
     } else {
-      submissions.add(submission);
+      await supabase.from('appraisal_submissions').insert(payload);
     }
-
-    await _saveAllSubmissions(submissions);
   }
 
   Future<void> submit(AppraisalSubmission submission) async {
-    final finalSubmission = submission.copyWith(submitted: true);
-    await saveDraft(finalSubmission);
+    await saveDraft(submission.copyWith(submitted: true));
   }
 
   Future<AppraisalSubmission?> getSubmission({
     required String cycleId,
     required String staffId,
   }) async {
-    final submissions = await _getAllSubmissionsInternal();
+    final data = await supabase
+        .from('appraisal_submissions')
+        .select('cycle_id, staff_id, self_scores, comment, submitted, manager_scores, manager_comment, reviewed')
+        .eq('cycle_id', cycleId)
+        .eq('staff_id', staffId)
+        .maybeSingle();
 
-    try {
-      return submissions.firstWhere(
-        (s) => s.cycleId == cycleId && s.staffId == staffId,
-      );
-    } catch (_) {
-      return null;
-    }
+    if (data == null) return null;
+    return _rowToSubmission(data);
   }
 
   Future<void> saveManagerReview({
@@ -96,22 +96,28 @@ class AppraisalService {
     required Map<String, int> managerScores,
     required String managerComment,
   }) async {
-    final submissions = await _getAllSubmissionsInternal();
+    await supabase
+        .from('appraisal_submissions')
+        .update({
+          'manager_scores': managerScores,
+          'manager_comment': managerComment,
+          'reviewed': true,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('cycle_id', cycleId)
+        .eq('staff_id', staffId);
+  }
 
-    final index = submissions.indexWhere(
-      (s) => s.cycleId == cycleId && s.staffId == staffId,
+  AppraisalSubmission _rowToSubmission(Map<String, dynamic> row) {
+    return AppraisalSubmission(
+      cycleId: row['cycle_id'] as String,
+      staffId: row['staff_id'] as String,
+      selfScores: Map<String, int>.from(row['self_scores'] as Map? ?? {}),
+      comment: (row['comment'] as String?) ?? '',
+      submitted: row['submitted'] as bool? ?? false,
+      managerScores: Map<String, int>.from(row['manager_scores'] as Map? ?? {}),
+      managerComment: (row['manager_comment'] as String?) ?? '',
+      reviewed: row['reviewed'] as bool? ?? false,
     );
-
-    if (index == -1) {
-      return;
-    }
-
-    submissions[index] = submissions[index].copyWith(
-      managerScores: managerScores,
-      managerComment: managerComment,
-      reviewed: true,
-    );
-
-    await _saveAllSubmissions(submissions);
   }
 }

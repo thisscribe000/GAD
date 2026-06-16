@@ -4,19 +4,20 @@ import 'package:gad/core/services/employee_service.dart';
 import 'package:gad/features/leave/domain/leave_request.dart';
 import 'package:gad/shared/widgets/app_card.dart';
 
-class ManagerLeaveRequestsScreen extends StatefulWidget {
-  const ManagerLeaveRequestsScreen({super.key});
+class AdminLeaveRequestsScreen extends StatefulWidget {
+  const AdminLeaveRequestsScreen({super.key});
 
   @override
-  State<ManagerLeaveRequestsScreen> createState() =>
-      _ManagerLeaveRequestsScreenState();
+  State<AdminLeaveRequestsScreen> createState() =>
+      _AdminLeaveRequestsScreenState();
 }
 
-class _ManagerLeaveRequestsScreenState
-    extends State<ManagerLeaveRequestsScreen> {
+class _AdminLeaveRequestsScreenState
+    extends State<AdminLeaveRequestsScreen> {
   final LeaveService _leaveService = LeaveService();
   final EmployeeService _employeeService = EmployeeService();
   List<LeaveRequest> _requests = [];
+  Map<String, String> _employeeNames = {};
   bool _loading = true;
 
   @override
@@ -27,9 +28,17 @@ class _ManagerLeaveRequestsScreenState
 
   Future<void> _load() async {
     final requests = await _leaveService.getAllRequests();
+
+    final employees = await _employeeService.getEmployees();
+    final names = <String, String>{};
+    for (final emp in employees) {
+      names[emp.id] = emp.name;
+    }
+
     if (!mounted) return;
     setState(() {
-      _requests = requests.reversed.toList();
+      _requests = requests;
+      _employeeNames = names;
       _loading = false;
     });
   }
@@ -67,6 +76,7 @@ class _ManagerLeaveRequestsScreenState
                     itemCount: _requests.length,
                     itemBuilder: (context, index) {
                       final req = _requests[index];
+                      final name = _employeeNames[req.staffId] ?? req.staffId;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: AppCard(
@@ -79,10 +89,7 @@ class _ManagerLeaveRequestsScreenState
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      _employeeService
-                                              .getEmployeeById(req.staffId)
-                                              ?.name ??
-                                          req.staffId,
+                                      name,
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         color: theme.colorScheme.onSurface,

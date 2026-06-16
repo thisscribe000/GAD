@@ -39,10 +39,11 @@ class _StaffDashboardState extends State<StaffDashboard> {
 
     int pending = 0;
     if (staffId != null) {
-      final emp = _employeeService.getEmployeeById(staffId);
+      final emp = await _employeeService.getEmployeeById(staffId);
       if (emp != null) _userName = emp.name;
 
-      final cycles = _appraisalService.getCycles().where((c) => c.isOpen);
+      final allCycles = await _appraisalService.getCycles();
+      final cycles = allCycles.where((c) => c.isOpen);
       for (final cycle in cycles) {
         final sub = await _appraisalService.getSubmission(
             cycleId: cycle.id, staffId: staffId);

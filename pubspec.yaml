@@ -19,15 +19,9 @@ dependencies:
   # For biometrics (add later)
   # local_auth: ^2.1.6
 
-  # State management (optional)
-  # provider: ^6.0.5
-  # riverpod: ^2.3.6
-
-  # Navigation (optional)
-  # go_router: ^10.0.0
-
-  # Secure storage (optional)
-  # flutter_secure_storage: ^9.0.0
+  # Backend
+  supabase_flutter: ^2.8.0
+  flutter_dotenv: ^5.2.0
 
 dev_dependencies:
   flutter_test:
@@ -37,7 +31,5 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # To add assets later:
-  # assets:
-  #   - assets/images/
-  #   - assets/icons/
+  assets:
+    - .env

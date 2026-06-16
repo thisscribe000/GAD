@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gad/core/router/app_router.dart';
 import 'package:gad/core/services/auth_service.dart';
-import 'package:gad/core/services/employee_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,44 +10,41 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _staffIdController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   final AuthService _authService = AuthService();
-  final EmployeeService _employeeService = EmployeeService();
 
   bool _isSubmitting = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _staffIdController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _handleLogin() async {
     if (_isSubmitting) return;
 
-    final staffId = _staffIdController.text.trim();
+    final staffIdOrEmail = _emailController.text.trim();
+    final password = _passwordController.text;
 
-    if (staffId.isEmpty) {
-      _showSnackBar('Please enter your ID');
+    if (staffIdOrEmail.isEmpty || password.isEmpty) {
+      _showSnackBar('Please enter your email/staff ID and password');
       return;
     }
 
     setState(() => _isSubmitting = true);
 
     try {
-      final employee = _employeeService.getEmployeeById(staffId);
-
-      if (employee == null) {
-        if (!mounted) return;
-        _showSnackBar('Employee not found');
-        return;
-      }
-
-      await _authService.login(
-        staffId: employee.id,
-        role: employee.role,
+      await _authService.loginWithStaffIdOrEmail(
+        staffIdOrEmail: staffIdOrEmail,
+        password: password,
       );
+
+      final role = await _authService.getCurrentRole();
 
       if (!mounted) return;
 
@@ -88,11 +84,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      if (employee.role == 'manager') {
-        Navigator.pushReplacementNamed(context, AppRouter.managerDashboard);
+      if (role == 'admin') {
+        Navigator.pushReplacementNamed(context, AppRouter.adminDashboard);
       } else {
         Navigator.pushReplacementNamed(context, AppRouter.staffDashboard);
       }
+    } catch (e) {
+      if (!mounted) return;
+      _showSnackBar('Login failed: ${e.toString().replaceAll('Exception: ', '')}');
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -163,20 +162,53 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Enter your Employee ID',
+                            'Sign in with your email or staff ID',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(height: 24),
                           TextField(
-                            controller: _staffIdController,
+                            controller: _emailController,
                             decoration: InputDecoration(
                               prefixIcon: Icon(
-                                Icons.person_outline,
+                                Icons.person_outlined,
                                 color: theme.colorScheme.outline,
                               ),
-                              hintText: 'Employee ID',
+                              hintText: 'Email or Staff ID',
+                              hintStyle: TextStyle(
+                                color: theme.colorScheme.onSurfaceVariant
+                                    .withValues(alpha: 0.5),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: theme.colorScheme.outlineVariant,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(
+                                Icons.lock_outlined,
+                                color: theme.colorScheme.outline,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  color: theme.colorScheme.outline,
+                                ),
+                                onPressed: () => setState(
+                                  () => _obscurePassword = !_obscurePassword,
+                                ),
+                              ),
+                              hintText: 'Password',
                               hintStyle: TextStyle(
                                 color: theme.colorScheme.onSurfaceVariant
                                     .withValues(alpha: 0.5),
@@ -203,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         color: Colors.white,
                                       ),
                                     )
-                                  : const Text('Login'),
+                                  : const Text('Sign In'),
                             ),
                           ),
                           const SizedBox(height: 16),

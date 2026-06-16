@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:gad/core/router/app_router.dart';
 import 'package:gad/core/services/auth_service.dart';
 import 'package:gad/core/services/biometric_service.dart';
 import 'package:gad/core/theme/app_theme.dart';
 import 'package:gad/features/auth/presentation/login_screen.dart';
-import 'package:gad/features/dashboard/presentation/manager_dashboard.dart';
+import 'package:gad/features/dashboard/presentation/admin_dashboard.dart';
 import 'package:gad/features/dashboard/presentation/staff_dashboard.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
+
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL']!,
+    publishableKey: dotenv.env['SUPABASE_ANON_KEY']!,
+  );
+
   runApp(const MyApp());
 }
 
@@ -65,8 +74,8 @@ class _AuthGateState extends State<AuthGate> {
       final role = await _authService.getCurrentRole();
 
       Widget targetScreen;
-      if (role == 'manager') {
-        targetScreen = const ManagerDashboard();
+      if (role == 'admin') {
+        targetScreen = const AdminDashboard();
       } else {
         targetScreen = const StaffDashboard();
       }

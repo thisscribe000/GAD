@@ -8,22 +8,23 @@ import 'package:gad/features/assessments/domain/appraisal_submission.dart';
 import 'package:gad/shared/widgets/app_card.dart';
 import 'package:gad/shared/widgets/app_drawer.dart';
 import 'package:gad/shared/widgets/stat_card.dart';
-import 'manager_weekend_approval_screen.dart';
+import 'admin_weekend_approval_screen.dart';
 
-class ManagerDashboard extends StatefulWidget {
-  const ManagerDashboard({super.key});
+class AdminDashboard extends StatefulWidget {
+  const AdminDashboard({super.key});
 
   @override
-  State<ManagerDashboard> createState() => _ManagerDashboardState();
+  State<AdminDashboard> createState() => _AdminDashboardState();
 }
 
-class _ManagerDashboardState extends State<ManagerDashboard> {
+class _AdminDashboardState extends State<AdminDashboard> {
   final AppraisalService _service = AppraisalService();
   final AttendanceService _attendanceService = AttendanceService();
   final LeaveService _leaveService = LeaveService();
   final EmployeeService _employeeService = EmployeeService();
 
   List<AppraisalSubmission> _submissions = [];
+  Map<String, String> _employeeNames = {};
 
   int _presentToday = 0;
   int _lateToday = 0;
@@ -42,10 +43,17 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
     final attendance = await _attendanceService.getAttendanceAnalytics();
     final onLeaveToday = await _leaveService.getApprovedLeaveCountToday();
 
+    final employees = await _employeeService.getEmployees();
+    final names = <String, String>{};
+    for (final emp in employees) {
+      names[emp.id] = emp.name;
+    }
+
     if (!mounted) return;
 
     setState(() {
       _submissions = subs;
+      _employeeNames = names;
       _presentToday = attendance['present'] as int? ?? 0;
       _lateToday = attendance['late'] as int? ?? 0;
       _absentToday = attendance['absent'] as int? ?? 0;
@@ -72,7 +80,7 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
     return Scaffold(
       drawer: const AppDrawer(
         userName: 'Pastor Daniel',
-        userRole: 'Manager',
+        userRole: 'Admin',
       ),
       appBar: AppBar(
         leading: Builder(
@@ -95,7 +103,7 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
             ),
           ),
         ),
-        title: const Text('Manager Dashboard'),
+        title: const Text('Admin Dashboard'),
       ),
       body: RefreshIndicator(
         onRefresh: _loadDashboard,
@@ -168,7 +176,7 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
                     title: 'Leave Requests',
                     subtitle: 'Review staff leave applications',
                     onTap: () => Navigator.pushNamed(
-                        context, AppRouter.managerLeaveRequests),
+                        context, AppRouter.adminLeaveRequests),
                   ),
                   Divider(height: 1,
                       color: theme.colorScheme.outlineVariant),
@@ -183,9 +191,20 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
                         context,
                         MaterialPageRoute(
                             builder: (_) =>
-                                const ManagerWeekendApprovalScreen()),
+                                const AdminWeekendApprovalScreen()),
                       );
                     },
+                  ),
+                  Divider(height: 1,
+                      color: theme.colorScheme.outlineVariant),
+                  _opsRow(
+                    context,
+                    icon: Icons.person_add,
+                    color: Colors.green,
+                    title: 'Add Staff',
+                    subtitle: 'Register a new employee',
+                    onTap: () => Navigator.pushNamed(
+                        context, AppRouter.addStaff),
                   ),
                 ],
               ),
@@ -290,9 +309,7 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
                     )
                   else
                     ..._submissions.map((s) {
-                      final emp =
-                          _employeeService.getEmployeeById(s.staffId);
-                      final displayName = emp?.name ?? s.staffId;
+                      final displayName = _employeeNames[s.staffId] ?? s.staffId;
                       return _buildStaffRow(
                           context, displayName, s);
                     }),
@@ -408,7 +425,7 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
             width: 72,
             child: ElevatedButton(
               onPressed: () => Navigator.pushNamed(
-                  context, AppRouter.managerReview,
+                  context, AppRouter.adminReview,
                   arguments: submission),
               style: ElevatedButton.styleFrom(
                 padding:
@@ -425,5 +442,4 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
       ),
     );
   }
-
 }
