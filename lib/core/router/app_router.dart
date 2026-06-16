@@ -10,8 +10,12 @@ import 'package:gad/features/auth/presentation/forgot_password_screen.dart';
 import 'package:gad/features/auth/presentation/login_screen.dart';
 import 'package:gad/features/dashboard/presentation/admin_dashboard.dart';
 import 'package:gad/features/dashboard/presentation/staff_dashboard.dart';
+import 'package:gad/features/daily_reports/presentation/admin_daily_reports_screen.dart';
+import 'package:gad/features/daily_reports/presentation/daily_report_screen.dart';
+import 'package:gad/features/directory/domain/employee.dart';
 import 'package:gad/features/directory/presentation/add_staff_screen.dart';
 import 'package:gad/features/directory/presentation/directory_list_screen.dart';
+import 'package:gad/features/directory/presentation/edit_staff_screen.dart';
 import 'package:gad/features/directory/presentation/profile_screen.dart';
 import 'package:gad/features/leave/presentation/leave_history_screen.dart';
 import 'package:gad/features/leave/presentation/leave_request_screen.dart';
@@ -36,6 +40,9 @@ class AppRouter {
   static const String profile = '/profile';
 
   static const String addStaff = '/directory/add-staff';
+  static const String editStaff = '/directory/edit-staff';
+  static const String dailyReport = '/daily-report';
+  static const String adminDailyReports = '/daily-reports/admin';
   static const String leaveRequest = '/leave/request';
   static const String leaveHistory = '/leave/history';
   static const String adminLeaveRequests = '/leave/admin';
@@ -79,10 +86,28 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const DirectoryListScreen());
 
       case profile:
-        return MaterialPageRoute(builder: (_) => const ProfileScreen());
+        final args = settings.arguments as Map<String, dynamic>?;
+        final employeeId = args?['employeeId'] as String?;
+        return MaterialPageRoute(
+          builder: (_) => ProfileScreen(employeeId: employeeId),
+        );
 
       case addStaff:
         return MaterialPageRoute(builder: (_) => const AddStaffScreen());
+
+      case editStaff:
+        final employee = settings.arguments as Employee;
+        return MaterialPageRoute(
+          builder: (_) => EditStaffScreen(employee: employee),
+        );
+
+      case dailyReport:
+        return MaterialPageRoute(builder: (_) => const DailyReportScreen());
+
+      case adminDailyReports:
+        return MaterialPageRoute(
+          builder: (_) => const AdminDailyReportsScreen(),
+        );
 
       case leaveRequest:
         return MaterialPageRoute(builder: (_) => const LeaveRequestScreen());

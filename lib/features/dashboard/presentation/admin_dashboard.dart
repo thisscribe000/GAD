@@ -199,6 +199,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       color: theme.colorScheme.outlineVariant),
                   _opsRow(
                     context,
+                    icon: Icons.edit_note,
+                    color: Colors.indigo,
+                    title: 'Daily Reports',
+                    subtitle: 'View staff daily reports',
+                    onTap: () => Navigator.pushNamed(
+                        context, AppRouter.adminDailyReports),
+                  ),
+                  Divider(height: 1,
+                      color: theme.colorScheme.outlineVariant),
+                  _opsRow(
+                    context,
                     icon: Icons.person_add,
                     color: Colors.green,
                     title: 'Add Staff',

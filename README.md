@@ -1,46 +1,60 @@
 # GAD — General Administration Dashboard
 
-A work management app for attendance tracking, leave management, performance appraisals, and staff administration.
+A work management app for attendance tracking, leave management, performance appraisals, staff administration, and daily reporting.
 
 Built with **Flutter** + **Supabase** (PostgreSQL + Auth).
 
-## Status
-
-The app is **functional and working** on its first release. Core features are implemented end-to-end. See below for what's done and what's planned.
-
 ## Features
 
-### ✅ Implemented
+### Authentication
+- Login with email or staff ID + password via Supabase Auth
+- Biometric (fingerprint/face) enrollment on first login
+- Role-based routing: Staff → Staff Dashboard, Admin → Admin Dashboard
+- Forgot Password — sends real password reset email via Supabase
 
-| Feature | Details |
-|---------|---------|
-| **Authentication** | Email or Staff ID login via Supabase Auth. Optional biometric (fingerprint/face) enrollment on first login. Role-based routing (staff vs admin dashboard). |
-| **Attendance** | Clock in/out with biometric verification. GPS geofence check (within 200m of office). Weekend restriction. Real-time clock with work duration tracking. History with On Time / Late / Absent status. |
-| **Leave Management** | Staff can submit requests with type, dates, and reason. Admin can approve or reject. History view with status badges (Approved / Rejected / Pending). |
-| **Performance Appraisals** | Appraisal cycles (e.g. Q1 2026). Self-assessment with 5 KPI categories rated 1–5. Admin review with manager scores and comment. Results view with percentage indicator and category breakdown. |
-| **Staff Directory** | View staff profiles with work duration stats. **Add Staff** flow creates a Supabase Auth user automatically with a generated temporary password. |
-| **Weekend Work Control** | Admin can grant weekend work permissions to staff. |
-| **Admin Dashboard** | Attendance analytics (present/late/absent counts, average work hours). Operations panel (leave requests, weekend permissions, add staff). Performance overview with staff list and review buttons. |
+### Staff Dashboard
+- Greeting with clock status (clocked in/out)
+- Stats: Days Present, Pending Appraisals (open cycles not yet submitted)
+- Quick Tasks: Performance Appraisal, Attendance History, Request Leave, My Leave Requests, Daily Report
 
-### 🐛 Known Issues / Stubs
+### Admin Dashboard
+- Attendance analytics: Present / Late / Absent counts, Average Work Today
+- Operations: Leave Requests, Weekend Permissions, Daily Reports, Add Staff
+- Performance Overview: employee stats with review buttons
+- Staff list with review buttons
 
-| Issue | Status |
-|-------|--------|
-| Directory list shows hardcoded employees (not real DB data) | **To fix** |
-| Weekend approval screen uses hardcoded staff list | **To fix** |
-| Profile screen ignores route argument (always loads current user) | **To fix** |
-| Forgot password screen is UI only (no actual reset call) | **To fix** |
+### Attendance
+- Clock in/out with biometric verification + GPS geofence (200m from office)
+- Weekend restriction (requires admin permission grant)
+- History with status: On Time, Late, Open, Absent
+- Weekly summary with total hours, average, days present
 
-### 🗑️ Dead Code (11 files, not used)
+### Leave Management
+- Staff: submit request with type, dates, and reason
+- Admin: approve or reject
+- History with status badges: Approved, Rejected, Pending
 
-Various orphaned service files, widgets, and an old local-only attendance module from before the Supabase migration. Marked for cleanup.
+### Performance Appraisals
+- Appraisal cycles (e.g. Q1 2026) with open/closed status
+- Self-assessment: 5 KPI categories scored 1–5 + comment
+- Admin review: add manager scores + comment, mark as reviewed
+- Results: percentage indicator, category breakdown with progress bars, status pills
 
-## Planned Features
+### Staff Directory
+- Real employee list from database with pull-to-refresh
+- Profile: name, staff ID, department, position, role, average work duration
+- **Edit Staff**: admin can update name, email, department, position
+- **Delete Staff**: admin soft-removes (hides from directory, preserves history)
+- **Add Staff**: creates Supabase Auth user + employee record, auto-generates staff ID and temporary password
 
-1. **Fix stubs** — directory list, weekend approval, profile, forgot password
-2. **Clean up** — remove dead code
-3. **Daily Reports** — staff submit what they did today and plans for the week; admin can browse
-4. **Polish** — edit/delete staff, leave balance tracking, reports/export
+### Daily Reports
+- Staff form: "What I did today" + "Plans for the week" (updatable same-day)
+- Admin browser: view all staff reports by date
+- RLS: staff see own reports, admins see all
+
+### Weekend Work Control
+- Admin grants/revokes weekend clock-in permission per staff member
+- Real employee list (no hardcoded data)
 
 ## Tech Stack
 
@@ -49,29 +63,41 @@ Various orphaned service files, widgets, and an old local-only attendance module
 | Frontend | Flutter (Dart) |
 | Backend | Supabase (PostgreSQL) |
 | Auth | Supabase Auth (email/password) |
-| State | setState (no external library) |
+| State | setState |
 | Biometrics | local_auth |
 | Location | geolocator |
-| Storage | SharedPreferences (device-local prefs only) |
+| Device Storage | SharedPreferences (biometric prefs only) |
 
-## Getting Started
+## Database
 
-### Prerequisites
+8 tables with Row Level Security on all, using email-based identity:
+`employees`, `attendance_records`, `leave_requests`, `appraisal_cycles`, `kpi_questions`, `appraisal_submissions`, `weekend_permissions`, `daily_reports`
 
-- Flutter SDK >=3.0.0
-- A Supabase project with the schema from `sql/schema.sql`
+Seed data: 3 employees, 2 appraisal cycles, 5 KPI questions.
 
-### Setup
+## Setup
 
-1. Clone the repo
-2. Create a `.env` file in the project root:
-   ```
-   SUPABASE_URL=https://your-project.supabase.co
-   SUPABASE_ANON_KEY=your-anon-key
-   ```
-3. Run the schema in your Supabase SQL Editor: `sql/schema.sql`
-4. Run the RLS migration: `sql/002_rls_email_migration.sql`
-5. Create an admin auth user manually in Supabase Auth (e.g. `admin@church.org`)
-6. Insert a matching employee record (role = `admin`)
-7. `flutter pub get`
-8. `flutter run`
+```bash
+# Prerequisites: Flutter SDK >=3.0.0, a Supabase project
+
+# 1. Clone
+git clone https://github.com/thisscribe000/GAD.git
+cd GAD
+
+# 2. Create .env (already gitignored)
+echo "SUPABASE_URL=https://your-project.supabase.co" > .env
+echo "SUPABASE_ANON_KEY=your-anon-key" >> .env
+
+# 3. Run SQL in Supabase Editor (in order):
+#    sql/schema.sql
+#    sql/002_rls_email_migration.sql
+#    sql/003_daily_reports.sql
+#    sql/004_employee_active.sql
+
+# 4. Create an admin auth user in Supabase Auth dashboard
+#    Insert a matching employee record with role='admin'
+
+# 5. Run
+flutter pub get
+flutter run
+```

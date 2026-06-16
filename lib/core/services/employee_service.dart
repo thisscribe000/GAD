@@ -47,10 +47,32 @@ class EmployeeService {
     return (staffId: staffId, tempPassword: tempPassword);
   }
 
+  Future<void> updateEmployee({
+    required String staffId,
+    required String name,
+    required String department,
+    required String position,
+    String? email,
+  }) async {
+    await supabase.from('employees').update({
+      'name': name,
+      'department': department,
+      'position': position,
+      if (email != null) 'email': email,
+    }).eq('staff_id', staffId);
+  }
+
+  Future<void> softDeleteEmployee(String staffId) async {
+    await supabase.from('employees').update({
+      'is_active': false,
+    }).eq('staff_id', staffId);
+  }
+
   Future<List<Employee>> getEmployees() async {
     final data = await supabase
         .from('employees')
         .select('staff_id, name, role, department, position')
+        .eq('is_active', true)
         .order('name');
 
     return data.map((row) => Employee(
@@ -67,6 +89,7 @@ class EmployeeService {
         .from('employees')
         .select('staff_id, name, role, department, position')
         .eq('staff_id', id)
+        .eq('is_active', true)
         .maybeSingle();
 
     if (data == null) return null;
